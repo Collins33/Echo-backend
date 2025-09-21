@@ -9,8 +9,8 @@ httpx==0.28.1
 pytest-asyncio==0.23.8
 
 # ML/ASR
-torch==2.0.1
-torchaudio==2.0.2
+torch==2.2.2
+torchaudio==2.2.2
 transformers==4.31.0
 numpy<2
 

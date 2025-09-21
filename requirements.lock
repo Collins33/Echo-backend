@@ -43,8 +43,8 @@ starlette==0.48.0
 sympy==1.14.0
 tokenizers==0.13.3
 tomli==2.2.1
-torch==2.0.1
-torchaudio==2.0.2
+torch==2.2.2
+torchaudio==2.2.2
 tqdm==4.67.1
 transformers==4.31.0
 typing-extensions==4.15.0
