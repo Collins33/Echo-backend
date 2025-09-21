@@ -31,7 +31,7 @@ pydantic==2.11.9
 pydantic-core==2.33.2
 pygments==2.19.2
 pytest==8.4.2
-pytest-asyncio==1.2.0
+pytest-asyncio==0.23.8
 python-dotenv==1.1.1
 python-multipart==0.0.20
 PyYAML==6.0.2
@@ -50,7 +50,7 @@ transformers==4.31.0
 typing-extensions==4.15.0
 typing-inspection==0.4.1
 urllib3==2.5.0
-uvicorn==0.36.0
+uvicorn==0.30.6
 uvloop==0.21.0
 watchfiles==1.1.0
 websockets==15.0.1
