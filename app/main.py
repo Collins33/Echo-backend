@@ -1,16 +1,26 @@
 from fastapi import FastAPI, UploadFile, File, Form
+from pydantic import BaseModel
+from functools import lru_cache
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from app.services.text_to_speech import TextToSpeech
-
-
 from app.services.whisper_asr import WhisperASR
+from app import config
+import boto3
+import base64
 
 import os
 import io
 
 app = FastAPI(title="Echo Backend")
 asr_model = WhisperASR()
+
+def get_settings():
+    return config.Settings()
+
+class Text(BaseModel):
+    content: str
+    output_format: str
 
 class TTSRequest(BaseModel):
     text: str
@@ -32,14 +42,17 @@ async def transcribe_audio(file: UploadFile = File(...)) :
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-@app.post("/tts")
-def generate_tts(request: TTSRequest):
-    tts = TextToSpeech(request.text)
-    mp3_path = tts.speak()
-    return FileResponse(
-        mp3_path,
-        media_type="audio/mpeg",
-        filename="speech.mp3"
-    )
+@app.post("/text-to-speech")
+def generate_tts(text: Text):
+    client = boto3.client('polly', aws_access_key_id=get_settings().AWS_AK, aws_secret_access_key=get_settings().AWS_SAK, region_name='us-east-1')
+    result = client.synthesize_speech(Text=text.content, OutputFormat=text.output_format, VoiceId='Brian')
+    audio = result['AudioStream'].read()
+    encoded_audio = base64.b64encode(audio).decode('utf-8')
+
+    return {"message": "Audio conversion complete", "data" : {
+        "text": text.content,
+        "output_format": text.output_format,
+        "audio": encoded_audio
+    }}
 
 
