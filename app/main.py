@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from pydantic import BaseModel
 from functools import lru_cache
 from fastapi.responses import FileResponse
@@ -14,6 +14,8 @@ import io
 
 app = FastAPI(title="Echo Backend")
 asr_model = WhisperASR()
+
+MAX_FILE_SIZE_MB = 50
 
 def get_settings():
     return config.Settings()
@@ -32,12 +34,27 @@ def root():
 @app.post("/transcribe")
 async def transcribe_audio(file: UploadFile = File(...)) :
     temp_path = f"temp_{file.filename}"
+
+    # read the file
+    file_bytes = await file.read()
+
+    if len(file_bytes) > MAX_FILE_SIZE_MB * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="File too large")
+
+    # throw error if the file is empty
+    if len(file_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Invalid or empty audio file")
+
     with open(temp_path, "wb") as f:
         f.write(await file.read())
 
     try:
-        transcription = asr_model.transcribe(temp_path)
+        try:
+            transcription = asr_model.transcribe(temp_path)
+        except RuntimeError as e:
+            raise HTTPException(status_code=415, detail="Unsupported or unreadable audio format")
         return {"transcription": transcription}
+
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
