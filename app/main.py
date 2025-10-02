@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from functools import lru_cache
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from app.services.text_to_speech import TextToSpeech
 from app.services.whisper_asr import WhisperASR
 from app import config
 import boto3
@@ -19,13 +18,9 @@ MAX_FILE_SIZE_MB = 50
 
 def get_settings():
     return config.Settings()
-
 class Text(BaseModel):
     content: str
     output_format: str
-
-class TTSRequest(BaseModel):
-    text: str
 
 @app.get("/")
 def root():
