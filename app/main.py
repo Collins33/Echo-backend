@@ -56,15 +56,38 @@ async def transcribe_audio(file: UploadFile = File(...)) :
 
 @app.post("/text-to-speech")
 def generate_tts(text: Text):
-    client = boto3.client('polly', aws_access_key_id=get_settings().AWS_AK, aws_secret_access_key=get_settings().AWS_SAK, region_name='us-east-1')
-    result = client.synthesize_speech(Text=text.content, OutputFormat=text.output_format, VoiceId='Brian')
-    audio = result['AudioStream'].read()
-    encoded_audio = base64.b64encode(audio).decode('utf-8')
+    # --- Edge Case 1: Empty text ---
+    if not text.content.strip():
+        raise HTTPException(status_code=400, detail="Text input cannot be empty")
 
-    return {"message": "Audio conversion complete", "data" : {
-        "text": text.content,
-        "output_format": text.output_format,
-        "audio": encoded_audio
-    }}
+    # --- Edge Case 2: Unsupported output format ---
+    supported_formats = {"mp3", "ogg_vorbis", "pcm"}
+    if text.output_format not in supported_formats:
+        raise HTTPException(status_code=400, detail="Unsupported output format")
+
+    try:
+        client = boto3.client(
+            'polly',
+            aws_access_key_id=get_settings().AWS_AK,
+            aws_secret_access_key=get_settings().AWS_SAK,
+            region_name='us-east-1'
+        )
+        result = client.synthesize_speech(
+            Text=text.content,
+            OutputFormat=text.output_format,
+            VoiceId='Brian'
+        )
+        audio = result['AudioStream'].read()
+        encoded_audio = base64.b64encode(audio).decode('utf-8')
+
+        return {"message": "Audio conversion complete", "data": {
+            "text": text.content,
+            "output_format": text.output_format,
+            "audio": encoded_audio
+        }}
+
+    # --- Edge Case 3: Polly service failure ---
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Text-to-speech service unavailable")
 
 
