@@ -71,6 +71,12 @@ def test_generate_tts(mocker):
     # temp replace boto3.client function with our fake one
     mocker.patch("app.main.boto3.client", return_value=mock_client)
 
+    # Patch get_settings so AWS credentials don't matter
+    fake_settings = mocker.Mock()
+    fake_settings.AWS_AK = "fake-ak"
+    fake_settings.AWS_SAK = "fake-sak"
+    mocker.patch("app.main.get_settings", return_value=fake_settings)
+
     # --- Step 2: Call the endpoint ---
     payload = {"content": "Hello world", "output_format": "mp3"}
     response = client.post("/text-to-speech", json=payload)
